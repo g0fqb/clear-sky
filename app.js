@@ -9,7 +9,7 @@ async function getForecast() {
   navigator.geolocation.getCurrentPosition(async position => {
     const lat = position.coords.latitude;
     const lon = position.coords.longitude;
-    const apiKey = 'YOUR_API_KEY'; // Replace with your actual OpenWeatherMap API key
+    const apiKey = '9de285199f14e6e87b3105318bf7f669'; // Replace with your actual OpenWeatherMap API key
 
     const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,daily,alerts&units=metric&appid=${apiKey}`;
 
@@ -17,10 +17,15 @@ async function getForecast() {
       const response = await fetch(url);
       const data = await response.json();
 
-      console.log("API response:", data); // Debugging output
+      console.log("Full API response:", data);
 
-      if (!data.hourly || !Array.isArray(data.hourly)) {
-        forecastDiv.innerHTML = `<p>Hourly forecast data is unavailable. Please check your API key or endpoint.</p>`;
+      if (!data || typeof data !== 'object') {
+        forecastDiv.innerHTML = `<p>Unexpected response format. Please check your API key and endpoint.</p>`;
+        return;
+      }
+
+      if (!Array.isArray(data.hourly)) {
+        forecastDiv.innerHTML = `<p>Hourly forecast data is missing. This may be due to an invalid API key or unsupported location.</p>`;
         return;
       }
 
