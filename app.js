@@ -11,7 +11,7 @@ async function getForecast() {
     const lon = position.coords.longitude;
     const apiKey = '9de285199f14e6e87b3105318bf7f669'; // Replace with your actual OpenWeatherMap API key
 
-    const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,daily,alerts&units=metric&appid=${apiKey}`;
+    const url = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&exclude=minutely,daily,alerts&units=metric&appid=${apiKey}`;
 
     try {
       const response = await fetch(url);
@@ -40,7 +40,7 @@ async function getForecast() {
         return `<li>${time}: ${hour.clouds}% cloud cover</li>`;
       }).join('');
 
-      const moonPhase = data.current?.moon_phase ?? null;
+      const moonPhase = data.daily?.[0]?.moon_phase ?? null;
       const moonDescription = moonPhase !== null ? getMoonPhaseDescription(moonPhase) : "Unavailable";
 
       forecastDiv.innerHTML = `
