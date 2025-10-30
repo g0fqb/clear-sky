@@ -9,14 +9,21 @@ async function getForecast() {
   navigator.geolocation.getCurrentPosition(async position => {
     const lat = position.coords.latitude;
     const lon = position.coords.longitude;
-    const apiKey = '9de285199f14e6e87b3105318bf7f669'; // Replace with your OpenWeatherMap key
+    const apiKey = 'YOUR_API_KEY'; // Replace with your actual OpenWeatherMap API key
 
     const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,daily,alerts&units=metric&appid=${apiKey}`;
-    console.log(url;
+
     try {
       const response = await fetch(url);
       const data = await response.json();
-      console.log(data);
+
+      console.log("API response:", data); // Debugging output
+
+      if (!data.hourly || !Array.isArray(data.hourly)) {
+        forecastDiv.innerHTML = `<p>Hourly forecast data is unavailable. Please check your API key or endpoint.</p>`;
+        return;
+      }
+
       const now = new Date();
       const tonightHours = data.hourly.filter(hour => {
         const hourDate = new Date(hour.dt * 1000);
@@ -28,8 +35,8 @@ async function getForecast() {
         return `<li>${time}: ${hour.clouds}% cloud cover</li>`;
       }).join('');
 
-      const moonPhase = data.current.moon_phase;
-      const moonDescription = getMoonPhaseDescription(moonPhase);
+      const moonPhase = data.current?.moon_phase ?? null;
+      const moonDescription = moonPhase !== null ? getMoonPhaseDescription(moonPhase) : "Unavailable";
 
       forecastDiv.innerHTML = `
         <h2>Tonight's Forecast</h2>
@@ -39,9 +46,21 @@ async function getForecast() {
         </ul>
       `;
     } catch (error) {
+      console.error("Fetch error:", error);
       forecastDiv.innerHTML = `<p>Error fetching forecast: ${error.message}</p>`;
     }
   }, error => {
     forecastDiv.innerHTML = `<p>Location access denied: ${error.message}</p>`;
   });
+}
+
+function getMoonPhaseDescription(phase) {
+  if (phase === 0 || phase === 1) return "New Moon";
+  if (phase < 0.25) return "Waxing Crescent";
+  if (phase === 0.25) return "First Quarter";
+  if (phase < 0.5) return "Waxing Gibbous";
+  if (phase === 0.5) return "Full Moon";
+  if (phase < 0.75) return "Waning Gibbous";
+  if (phase === 0.75) return "Last Quarter";
+  return "Waning Crescent";
 }
