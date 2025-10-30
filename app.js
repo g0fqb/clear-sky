@@ -9,7 +9,7 @@ async function getForecast() {
   navigator.geolocation.getCurrentPosition(async position => {
     const lat = position.coords.latitude;
     const lon = position.coords.longitude;
-    const apiKey = '2413a7da0cb67ef8937d4eabb6a1d76e'; // Replace with your actual OpenWeatherMap API key
+    const apiKey = ''; // Replace with your actual OpenWeatherMap API key
 
     const url = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&exclude=minutely,daily,alerts&units=metric&appid=${apiKey}`;
 
