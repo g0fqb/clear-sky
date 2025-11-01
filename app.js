@@ -9,12 +9,13 @@ async function getForecast() {
   navigator.geolocation.getCurrentPosition(async position => {
     const lat = position.coords.latitude;
     const lon = position.coords.longitude;
-    const apiKey = ''; // Replace with your actual OpenWeatherMap API key
+    
 
     const url = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&exclude=minutely,daily,alerts&units=metric&appid=${apiKey}`;
 
     try {
-      const response = await fetch(url);
+//      const response = await fetch(url); //
+      fetch('/api/weather?location=auto:ip');
       const data = await response.json();
 
       console.log("Full API response:", data);
