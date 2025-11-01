@@ -8,7 +8,10 @@ self.addEventListener('install', event => {
         '/styles.css',        // Your stylesheet
         '/manifest.json',     // Web app manifest
         '/icon-192.png',      // Icon (must exist)
-        '/icon-512.png'       // Icon (must exist)
+        '/icon-512.png',     // Icon (must exist)
+        '/favicon.ico',      // Icon (must exist)
+        '/server.js'       // Icon (must exist)
+        
         // Do NOT include favicon.ico unless it's present
       ]);
     })
