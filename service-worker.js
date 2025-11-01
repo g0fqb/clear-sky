@@ -3,13 +3,13 @@ self.addEventListener('install', event => {
     caches.open('clear-sky-v1').then(async cache => {
       try {
         await cache.addAll([
-          'index.html',       // Main page
-          'app.js',           // Your JavaScript
-          'styles.css',       // Your stylesheet
-          'manifest.json',    // Web app manifest
-          'icon-192.png',     // PWA icon
-          'icon-512.png',     // PWA icon
-          'favicon.ico'       // Site icon (must exist)
+          'index.html',
+          'app.js',
+          'styles.css',
+          'manifest.json',
+          'icon-192.png',
+          'icon-512.png',
+          'favicon.ico'
         ]);
         console.log('Service worker: Assets cached successfully');
       } catch (err) {
