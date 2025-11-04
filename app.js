@@ -1,5 +1,8 @@
+document.getElementById('forecastBtn').addEventListener('click', getForecast);
+
 async function getForecast() {
   const forecastDiv = document.getElementById('forecast');
+  forecastDiv.innerHTML = "<p>Loading forecast...</p>";
 
   if (!navigator.geolocation) {
     forecastDiv.innerHTML = "<p>Geolocation is not supported by your browser.</p>";
@@ -13,18 +16,9 @@ async function getForecast() {
 
     const url = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&exclude=minutely,daily,alerts&units=metric&appid=${apiKey}`;
 
-     try {
-      const response = await fetch('/api/weather?location=auto:ip');
+    try {
+      const response = await fetch(url);
       const data = await response.json();
-
-  // Now you can use `data` to update your UI
-      console.log(data);
-        } catch (error) {
-        console.error('Failed to fetch weather data:', error);  
-      }
-
-
-      console.log("Full API response:", data);
 
       if (!data || typeof data !== 'object') {
         forecastDiv.innerHTML = `<p>Unexpected response format. Please check your API key and endpoint.</p>`;
@@ -66,9 +60,6 @@ async function getForecast() {
   });
 }
 
-window.getForecast = getForecast;
-
-
 function getMoonPhaseDescription(phase) {
   if (phase === 0 || phase === 1) return "New Moon";
   if (phase < 0.25) return "Waxing Crescent";
@@ -82,9 +73,8 @@ function getMoonPhaseDescription(phase) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
+    navigator.serviceWorker.register('service-worker.js')
       .then(reg => console.log('Service Worker registered:', reg))
       .catch(err => console.error('Service Worker registration failed:', err));
   });
 }
-
