@@ -66,6 +66,9 @@ async function getForecast() {
   });
 }
 
+window.getForecast = getForecast;
+
+
 function getMoonPhaseDescription(phase) {
   if (phase === 0 || phase === 1) return "New Moon";
   if (phase < 0.25) return "Waxing Crescent";
