@@ -4,10 +4,10 @@ const ASSETS_TO_CACHE = [
   '/index.html',
   '/app.js',
   '/styles.css',
-  '/favicon.ico', 
   '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  '/favicon.ico',
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
 self.addEventListener('install', event => {
@@ -17,7 +17,9 @@ self.addEventListener('install', event => {
         ASSETS_TO_CACHE.map(url =>
           fetch(url)
             .then(response => {
-              if (!response.ok) throw new Error(`Request for ${url} failed with status ${response.status}`);
+              if (!response.ok) {
+                throw new Error(`Request for ${url} failed with status ${response.status}`);
+              }
               return cache.put(url, response.clone());
             })
             .catch(err => {
