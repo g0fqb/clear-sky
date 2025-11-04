@@ -12,44 +12,39 @@ async function getForecast() {
   navigator.geolocation.getCurrentPosition(async position => {
     const lat = position.coords.latitude;
     const lon = position.coords.longitude;
-    const apiKey = '2413a7da0cb67ef8937d4eabb6a1d76e'; // Replace with your actual OpenWeatherMap API key
+    const apiKey = '2413a7da0cb67ef8937d4eabb6a1d76e'; // Your working key
 
-    const url = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&exclude=minutely,daily,alerts&units=metric&appid=${apiKey}`;
+    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
 
     try {
       const response = await fetch(url);
       const data = await response.json();
 
-      if (!data || typeof data !== 'object') {
-        forecastDiv.innerHTML = `<p>Unexpected response format. Please check your API key and endpoint.</p>`;
-        return;
-      }
-
-      if (!Array.isArray(data.hourly)) {
-        forecastDiv.innerHTML = `<p>Hourly forecast data is missing. This may be due to an invalid API key or unsupported location.</p>`;
+      if (!data.list || !Array.isArray(data.list)) {
+        forecastDiv.innerHTML = `<p>Forecast data is missing or malformed.</p>`;
         return;
       }
 
       const now = new Date();
-      const tonightHours = data.hourly.filter(hour => {
-        const hourDate = new Date(hour.dt * 1000);
-        return hourDate.getDate() === now.getDate() && hourDate.getHours() >= 18;
+      const tonightHours = data.list.filter(item => {
+        const itemDate = new Date(item.dt * 1000);
+        return itemDate.getDate() === now.getDate() && itemDate.getHours() >= 18;
       });
 
-      const cloudSummary = tonightHours.map(hour => {
-        const time = new Date(hour.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        return `<li>${time}: ${hour.clouds}% cloud cover</li>`;
-      }).join('');
+      if (tonightHours.length === 0) {
+        forecastDiv.innerHTML = `<p>No forecast data available for tonight.</p>`;
+        return;
+      }
 
-      const moonPhase = data.daily?.[0]?.moon_phase ?? null;
-      const moonDescription = moonPhase !== null ? getMoonPhaseDescription(moonPhase) : "Unavailable";
+      const cloudSummary = tonightHours.map(item => {
+        const time = new Date(item.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const cloudCover = typeof item.clouds === 'number' ? item.clouds : item.clouds?.all ?? 'N/A';
+        return `<li>${time}: ${cloudCover}% cloud cover</li>`;       
+      }).join('');
 
       forecastDiv.innerHTML = `
         <h2>Tonight's Forecast</h2>
-        <ul>
-          ${cloudSummary}
-          <li>Moon Phase: ${moonDescription}</li>
-        </ul>
+        <ul>${cloudSummary}</ul>
       `;
     } catch (error) {
       console.error("Fetch error:", error);
@@ -60,17 +55,7 @@ async function getForecast() {
   });
 }
 
-function getMoonPhaseDescription(phase) {
-  if (phase === 0 || phase === 1) return "New Moon";
-  if (phase < 0.25) return "Waxing Crescent";
-  if (phase === 0.25) return "First Quarter";
-  if (phase < 0.5) return "Waxing Gibbous";
-  if (phase === 0.5) return "Full Moon";
-  if (phase < 0.75) return "Waning Gibbous";
-  if (phase === 0.75) return "Last Quarter";
-  return "Waning Crescent";
-}
-
+// Optional: Service worker registration
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js')
