@@ -1,50 +1,50 @@
-const CACHE_NAME = 'clear-sky-v1';
-const BASE_PATH = '/clear-sky'; // adjust for GitHub Pages subdirectory
-
-const ASSETS_TO_CACHE = [
-  `${BASE_PATH}/`,
-  `${BASE_PATH}/index.html`,
-  `${BASE_PATH}/app.js`,
-  `${BASE_PATH}/styles.css`,
-  `${BASE_PATH}/manifest.json`,
-  `${BASE_PATH}/favicon.ico`,
-  `${BASE_PATH}/icon-192.png`,
-  `${BASE_PATH}/icon-512.png`
-];
+const CACHE_NAME = 'clear-sky-runtime-v1';
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return Promise.allSettled(
-        ASSETS_TO_CACHE.map(url =>
-          fetch(url)
-            .then(response => {
-              if (response.ok) {
-                return cache.put(url, response.clone());
-              } else {
-                console.warn(`Skipping ${url}: ${response.status}`);
-              }
-            })
-            .catch(err => {
-              console.warn(`Skipping ${url}: ${err.message}`);
-            })
-        )
-      );
-    })
-  );
+  // Skip waiting so the new SW activates immediately
+  self.skipWaiting();
 });
 
-
 self.addEventListener('activate', event => {
+  // Clean up old caches if needed
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
       )
     )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) return cachedResponse;
+
+      return fetch(event.request)
+        .then(response => {
+          // Only cache successful responses
+          if (!response || response.status !== 200 || response.type !== 'basic') {
+            return response;
+          }
+
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
+          });
+
+          return response;
+        })
+        .catch(() => {
+          // Optional: fallback logic for offline
+          return new Response('Offline or failed to fetch', {
+            status: 503,
+            statusText: 'Service Unavailable'
+          });
+        });
+    })
   );
 });
