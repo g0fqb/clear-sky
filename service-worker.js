@@ -13,14 +13,15 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return Promise.all(
+      return Promise.allSettled(
         ASSETS_TO_CACHE.map(url =>
           fetch(url)
             .then(response => {
-              if (!response.ok) {
-                throw new Error(`Request for ${url} failed with status ${response.status}`);
+              if (response.ok) {
+                return cache.put(url, response.clone());
+              } else {
+                console.warn(`Skipping ${url}: ${response.status}`);
               }
-              return cache.put(url, response.clone());
             })
             .catch(err => {
               console.warn(`Skipping ${url}: ${err.message}`);
