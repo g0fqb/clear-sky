@@ -1,31 +1,29 @@
+const CACHE_NAME = 'clear-sky-v1';
+const ASSETS_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/app.js',
+  '/styles.css',
+  '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png'
+];
+
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open('clear-sky-v1').then(async cache => {
-      try {
-        await cache.addAll([
-          'index.html',
-          'app.js',
-          'styles.css',
-          'manifest.json',
-          'icon-192.png',
-          'icon-512.png',
-          'favicon.ico'
-        ]);
-        console.log('Service worker: Assets cached successfully');
-      } catch (err) {
-        console.error('Service worker: Cache addAll failed', err);
-      }
-    })
-  );
-});
-
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    }).catch(err => {
-      console.error('Service worker: Fetch failed', err);
-      return fetch(event.request);
+    caches.open(CACHE_NAME).then(cache => {
+      return Promise.all(
+        ASSETS_TO_CACHE.map(url =>
+          fetch(url)
+            .then(response => {
+              if (!response.ok) throw new Error(`Request for ${url} failed with status ${response.status}`);
+              return cache.put(url, response.clone());
+            })
+            .catch(err => {
+              console.warn(`Skipping ${url}: ${err.message}`);
+            })
+        )
+      );
     })
   );
 });
