@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const apiKey = "8539e0be0f9f4fec91c134528251911";
 
 app.use(express.static('public'));
 
