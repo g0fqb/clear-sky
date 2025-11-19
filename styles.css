@@ -29,3 +29,9 @@ button {
   margin-top: 1em;
   font-family: sans-serif;
 }
+
+#cloudChart {
+  margin-top: 1em;
+  background: #111;
+  border-radius: 8px;
+}

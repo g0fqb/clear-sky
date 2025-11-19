@@ -1,6 +1,6 @@
 document.getElementById('forecastBtn').addEventListener('click', getForecast);
 
-import { getSunTimes, getMoonPhase } from './astro.js';
+//import { getSunTimes, getMoonPhase } from './astro.js';
 
 
 function getUserLocation(callback) {
@@ -112,6 +112,44 @@ async function getForecast() {
         return;
       }
 
+const ctx = document.getElementById('cloudChart').getContext('2d');
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: tonightHours.map(item =>
+      new Date(item.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    ),
+    datasets: [{
+      label: 'Cloud Cover (%)',
+      data: tonightHours.map(item =>
+        typeof item.clouds === 'number' ? item.clouds : item.clouds?.all ?? 0
+      ),
+      borderColor: 'skyblue',
+      backgroundColor: 'rgba(135,206,235,0.2)',
+      fill: true,
+      tension: 0.3
+    }]
+  },
+  options: {
+    plugins: {
+      title: {
+        display: true,
+        text: "Tonight's Cloud Cover Forecast",
+        color: 'white'
+      }
+    },
+    scales: {
+      x: { ticks: { color: 'white' } },
+      y: {
+        beginAtZero: true,
+        max: 100,
+        ticks: { color: 'white' }
+      }
+    }
+  }
+});
+
+
       const cloudSummary = tonightHours.map(item => {
         const time = new Date(item.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const cloudCover = typeof item.clouds === 'number' ? item.clouds : item.clouds?.all ?? 'N/A';
@@ -130,6 +168,7 @@ async function getForecast() {
     forecastDiv.innerHTML = `<p>Location access denied: ${error.message}</p>`;
   });
 }
+
 
 // Optional: Service worker registration
 if ('serviceWorker' in navigator) {
