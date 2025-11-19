@@ -1,5 +1,69 @@
 document.getElementById('forecastBtn').addEventListener('click', getForecast);
 
+function getUserLocation(callback) {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        callback(lat, lng);
+      },
+      (err) => {
+        console.error("Geolocation error:", err);
+        // fallback: Sherwood Observatory coords
+        callback(53.15, -1.20);
+      }
+    );
+  } else {
+    console.error("Geolocation not supported");
+    callback(53.15, -1.20);
+  }
+}
+
+async function getSunTimes(lat, lng) {
+  const res = await fetch(
+    `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&formatted=0`
+  );
+  const data = await res.json();
+  return {
+    sunrise: new Date(data.results.sunrise),
+    sunset: new Date(data.results.sunset)
+  };
+}
+
+function getMoonPhase(date = new Date()) {
+  const lp = 2551443; // lunar period in seconds
+  const newMoon = new Date(1970, 0, 7, 20, 35, 0); // known new moon
+  const phase = ((date.getTime() - newMoon.getTime()) / 1000) % lp;
+  const phaseIndex = Math.floor((phase / lp) * 8); // 0–7 phases
+
+  const phases = [
+    "New Moon",
+    "Waxing Crescent",
+    "First Quarter",
+    "Waxing Gibbous",
+    "Full Moon",
+    "Waning Gibbous",
+    "Last Quarter",
+    "Waning Crescent"
+  ];
+
+  return phases[phaseIndex];
+}
+
+
+getUserLocation(async (lat, lng) => {
+  const sunTimes = await getSunTimes(lat, lng);
+  const moonPhase = getMoonPhase();
+
+  document.getElementById("astro-info").innerHTML = `
+    <p>🌅 Sunrise: ${sunTimes.sunrise.toLocaleTimeString()}</p>
+    <p>🌇 Sunset: ${sunTimes.sunset.toLocaleTimeString()}</p>
+    <p>🌙 Moon Phase: ${moonPhase}</p>
+  `;
+});
+
+
 async function getForecast() {
   const forecastDiv = document.getElementById('forecast');
   forecastDiv.innerHTML = "<p>Loading forecast...</p>";
