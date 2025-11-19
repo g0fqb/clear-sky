@@ -1,8 +1,6 @@
 document.getElementById('forecastBtn').addEventListener('click', getForecast);
 
-//import { getSunTimes, getMoonPhase } from './astro.js';
-
-
+// Astronomy helpers
 function getUserLocation(callback) {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -20,30 +18,6 @@ function getUserLocation(callback) {
   }
 }
 
-getUserLocation(async (lat, lng) => {
-  const sunTimes = await getSunTimes(lat, lng);
-  const moonPhase = getMoonPhase();
-
-  document.getElementById("astro-info").innerHTML = `
-    <p>🌅 Sunrise: ${sunTimes.sunrise.toLocaleTimeString()}</p>
-    <p>🌇 Sunset: ${sunTimes.sunset.toLocaleTimeString()}</p>
-    <p>🌙 Moon Phase: ${moonPhase}</p>
-  `;
-});
-
-document.getElementById('astroBtn').addEventListener('click', () => {
-  getUserLocation(async (lat, lng) => {
-    const sunTimes = await getSunTimes(lat, lng);
-    const moonPhase = getMoonPhase();
-
-    document.getElementById("astro-info").innerHTML = `
-      <p>🌅 Sunrise: ${sunTimes.sunrise.toLocaleTimeString()}</p>
-      <p>🌇 Sunset: ${sunTimes.sunset.toLocaleTimeString()}</p>
-      <p>🌙 Moon Phase: ${moonPhase}</p>
-    `;
-  });
-});
-
 async function getSunTimes(lat, lng) {
   const res = await fetch(
     `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&formatted=0`
@@ -57,29 +31,29 @@ async function getSunTimes(lat, lng) {
 
 function getMoonPhase(date = new Date()) {
   const lp = 2551443; // lunar period in seconds
-  const newMoon = new Date(1970, 0, 7, 20, 35, 0); // known new moon
+  const newMoon = new Date(1970, 0, 7, 20, 35, 0);
   const phase = ((date.getTime() - newMoon.getTime()) / 1000) % lp;
-  const phaseIndex = Math.floor((phase / lp) * 8); // 0–7 phases
+  const phaseIndex = Math.floor((phase / lp) * 8);
 
   const phases = [
-    "New Moon",
-    "Waxing Crescent",
-    "First Quarter",
-    "Waxing Gibbous",
-    "Full Moon",
-    "Waning Gibbous",
-    "Last Quarter",
-    "Waning Crescent"
+    "New Moon","Waxing Crescent","First Quarter","Waxing Gibbous",
+    "Full Moon","Waning Gibbous","Last Quarter","Waning Crescent"
   ];
-
   return phases[phaseIndex];
 }
 
+function getMoonIllumination(date = new Date()) {
+  const lp = 2551443;
+  const newMoon = new Date(1970, 0, 7, 20, 35, 0);
+  const phase = ((date.getTime() - newMoon.getTime()) / 1000) % lp;
+  const illumination = (1 - Math.cos((2 * Math.PI * phase) / lp)) / 2;
+  return Math.round(illumination * 100);
+}
 
+// Show astronomy info immediately
 getUserLocation(async (lat, lng) => {
   const sunTimes = await getSunTimes(lat, lng);
   const moonPhase = getMoonPhase();
-
   document.getElementById("astro-info").innerHTML = `
     <p>🌅 Sunrise: ${sunTimes.sunrise.toLocaleTimeString()}</p>
     <p>🌇 Sunset: ${sunTimes.sunset.toLocaleTimeString()}</p>
@@ -87,7 +61,20 @@ getUserLocation(async (lat, lng) => {
   `;
 });
 
+// Button to refresh astronomy info
+document.getElementById('astroBtn').addEventListener('click', () => {
+  getUserLocation(async (lat, lng) => {
+    const sunTimes = await getSunTimes(lat, lng);
+    const moonPhase = getMoonPhase();
+    document.getElementById("astro-info").innerHTML = `
+      <p>🌅 Sunrise: ${sunTimes.sunrise.toLocaleTimeString()}</p>
+      <p>🌇 Sunset: ${sunTimes.sunset.toLocaleTimeString()}</p>
+      <p>🌙 Moon Phase: ${moonPhase}</p>
+    `;
+  });
+});
 
+// Forecast + chart
 async function getForecast() {
   const forecastDiv = document.getElementById('forecast');
   forecastDiv.innerHTML = "<p>Loading forecast...</p>";
@@ -100,7 +87,7 @@ async function getForecast() {
   navigator.geolocation.getCurrentPosition(async position => {
     const lat = position.coords.latitude;
     const lon = position.coords.longitude;
-    const apiKey = '2413a7da0cb67ef8937d4eabb6a1d76e'; // Your working key
+    const apiKey = '2413a7da0cb67ef8937d4eabb6a1d76e';
 
     const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
 
@@ -113,63 +100,93 @@ async function getForecast() {
         return;
       }
 
-      const tonightHours = data.list.filter(item => {
+      const now = new Date();
+      const localDate = now.getDate();
+
+      // Forecast window: 18:00 tonight → 02:00 tomorrow
+      const forecastWindow = data.list.filter(item => {
         const itemDate = new Date(item.dt * 1000);
-        return itemDate.getDate() === now.getDate() && itemDate.getHours() >= 18 && itemDate.getHours() <= 23;
+        const itemLocalDate = itemDate.getDate();
+        const itemHour = itemDate.getHours();
+        return (
+          (itemLocalDate === localDate && itemHour >= 18) ||
+          (itemLocalDate === localDate + 1 && itemHour <= 2)
+        );
       });
 
-      if (tonightHours.length === 0) {
+      if (forecastWindow.length === 0) {
         forecastDiv.innerHTML = `<p>No forecast data available for tonight.</p>`;
         return;
       }
 
-const labels = tonightHours.map(item =>
-  new Date(item.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-);
+      const labels = forecastWindow.map(item =>
+        new Date(item.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      );
 
-const cloudData = tonightHours.map(item =>
-  typeof item.clouds === 'number' ? item.clouds : item.clouds?.all ?? 0
-);
+      const cloudData = forecastWindow.map(item =>
+        typeof item.clouds === 'number' ? item.clouds : item.clouds?.all ?? 0
+      );
 
-const ctx = document.getElementById('cloudChart').getContext('2d');
-new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: labels,
-    datasets: [{
-      label: 'Cloud Cover (%)',
-      data: cloudData,
-      borderColor: 'skyblue',
-      backgroundColor: 'rgba(135,206,235,0.2)',
-      fill: true,
-      tension: 0.3
-    }]
-  },
-  options: {
-    plugins: {
-      title: {
-        display: true,
-        text: "Tonight's Cloud Cover Forecast",
-        color: 'white'
-      }
-    },
-    scales: {
-      x: { ticks: { color: 'white' } },
-      y: {
-        beginAtZero: true,
-        max: 100,
-        ticks: { color: 'white' }
-      }
-    }
-  }
-});
+      // Highlight clearest hour
+      const minCloudIndex = cloudData.indexOf(Math.min(...cloudData));
+      const barColors = cloudData.map((val, idx) =>
+        idx === minCloudIndex ? 'rgba(50,205,50,0.8)' : 'rgba(135,206,235,0.6)'
+      );
 
+      // Moon illumination
+      const moonIllumination = getMoonIllumination();
 
-const cloudSummary = tonightHours.map(item => {
-const time = new Date(item.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-const cloudCover = typeof item.clouds === 'number' ? item.clouds : item.clouds?.all ?? 'N/A';
-return `<li>${time}: ${cloudCover}% cloud cover</li>`;       
-}).join('');
+      // Render chart
+      const ctx = document.getElementById('cloudChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Cloud Cover (%)',
+              data: cloudData,
+              backgroundColor: barColors,
+              borderColor: 'skyblue',
+              borderWidth: 1
+            },
+            {
+              label: `Moon Illumination (${moonIllumination}%)`,
+              data: Array(labels.length).fill(moonIllumination),
+              type: 'line',
+              borderColor: 'yellow',
+              borderWidth: 2,
+              fill: false,
+              tension: 0.3
+            }
+          ]
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: "Tonight's Cloud Cover Forecast",
+              color: 'white'
+            }
+          },
+          scales: {
+            x: { ticks: { color: 'white' } },
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: { color: 'white' }
+            }
+          }
+        }
+      });
+
+      // Text summary with ⭐ for clearest hour
+      const cloudSummary = forecastWindow.map((item, idx) => {
+        const time = new Date(item.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const cloudCover = typeof item.clouds === 'number' ? item.clouds : item.clouds?.all ?? 'N/A';
+        const star = idx === minCloudIndex ? " ⭐ Clearest" : "";
+        return `<li>${time}: ${cloudCover}% cloud cover${star}</li>`;
+      }).join('');
 
       forecastDiv.innerHTML = `
         <h2>Tonight's Forecast</h2>
@@ -184,8 +201,7 @@ return `<li>${time}: ${cloudCover}% cloud cover</li>`;
   });
 }
 
-
-// Optional: Service worker registration
+// Service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js')
@@ -193,3 +209,4 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.error('Service Worker registration failed:', err));
   });
 }
+
