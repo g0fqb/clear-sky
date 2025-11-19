@@ -1,14 +1,15 @@
 const CACHE_NAME = 'clear-sky-runtime-v1';
 
 const urlsToCache = [
-  "/clear-sky/",
-  "/clear-sky/index.html",
-  "/clear-sky/app.js",
-  "/clear-sky/styles.css",
-  "/clear-sky/manifest.json",
-  "/clear-sky/icon-192.png",
-  "/clear-sky/icon-512.png"
+  "./",
+  "./index.html",
+  "./app.js",
+  "./styles.css",
+  "./manifest.json",
+  "./icon-192.png",
+  "./icon-512.png"
 ];
+
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
