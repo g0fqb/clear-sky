@@ -1,9 +1,34 @@
 const CACHE_NAME = 'clear-sky-runtime-v1';
 
-self.addEventListener('install', event => {
-  // Skip waiting so the new SW activates immediately
+const urlsToCache = [
+  "/clear-sky/",
+  "/clear-sky/index.html",
+  "/clear-sky/app.js",
+  "/clear-sky/styles.css",
+  "/clear-sky/manifest.json",
+  "/clear-sky/icon-192.png",
+  "/clear-sky/icon-512.png"
+];
+
+self.addEventListener("install", (event) => {
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return Promise.all(
+        urlsToCache.map((url) =>
+          fetch(url).then((response) => {
+            if (response.ok) {
+              return cache.put(url, response);
+            } else {
+              console.warn("Not cached:", url);
+            }
+          })
+        )
+      );
+    })
+  );
 });
+
 
 self.addEventListener('activate', event => {
   // Clean up old caches if needed
