@@ -31,6 +31,18 @@ getUserLocation(async (lat, lng) => {
   `;
 });
 
+document.getElementById('astroBtn').addEventListener('click', () => {
+  getUserLocation(async (lat, lng) => {
+    const sunTimes = await getSunTimes(lat, lng);
+    const moonPhase = getMoonPhase();
+
+    document.getElementById("astro-info").innerHTML = `
+      <p>🌅 Sunrise: ${sunTimes.sunrise.toLocaleTimeString()}</p>
+      <p>🌇 Sunset: ${sunTimes.sunset.toLocaleTimeString()}</p>
+      <p>🌙 Moon Phase: ${moonPhase}</p>
+    `;
+  });
+});
 
 async function getSunTimes(lat, lng) {
   const res = await fetch(
@@ -101,10 +113,9 @@ async function getForecast() {
         return;
       }
 
-      const now = new Date();
       const tonightHours = data.list.filter(item => {
         const itemDate = new Date(item.dt * 1000);
-        return itemDate.getDate() === now.getDate() && itemDate.getHours() >= 18;
+        return itemDate.getDate() === now.getDate() && itemDate.getHours() >= 18 && itemDate.getHours() <= 23;
       });
 
       if (tonightHours.length === 0) {
@@ -112,18 +123,22 @@ async function getForecast() {
         return;
       }
 
+const labels = tonightHours.map(item =>
+  new Date(item.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+);
+
+const cloudData = tonightHours.map(item =>
+  typeof item.clouds === 'number' ? item.clouds : item.clouds?.all ?? 0
+);
+
 const ctx = document.getElementById('cloudChart').getContext('2d');
 new Chart(ctx, {
   type: 'line',
   data: {
-    labels: tonightHours.map(item =>
-      new Date(item.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    ),
+    labels: labels,
     datasets: [{
       label: 'Cloud Cover (%)',
-      data: tonightHours.map(item =>
-        typeof item.clouds === 'number' ? item.clouds : item.clouds?.all ?? 0
-      ),
+      data: cloudData,
       borderColor: 'skyblue',
       backgroundColor: 'rgba(135,206,235,0.2)',
       fill: true,
@@ -150,11 +165,11 @@ new Chart(ctx, {
 });
 
 
-      const cloudSummary = tonightHours.map(item => {
-        const time = new Date(item.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const cloudCover = typeof item.clouds === 'number' ? item.clouds : item.clouds?.all ?? 'N/A';
-        return `<li>${time}: ${cloudCover}% cloud cover</li>`;       
-      }).join('');
+const cloudSummary = tonightHours.map(item => {
+const time = new Date(item.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const cloudCover = typeof item.clouds === 'number' ? item.clouds : item.clouds?.all ?? 'N/A';
+return `<li>${time}: ${cloudCover}% cloud cover</li>`;       
+}).join('');
 
       forecastDiv.innerHTML = `
         <h2>Tonight's Forecast</h2>
