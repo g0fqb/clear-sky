@@ -13,3 +13,19 @@ button {
   padding: 0.5rem 1rem;
   margin-left: 0.5rem;
 }
+.astro-card {
+  background: #111;
+  color: #eee;
+  padding: 1em;
+  border-radius: 8px;
+  margin-top: 1em;
+}
+
+.astro-card {
+  background: #111;
+  color: #eee;
+  padding: 1em;
+  border-radius: 8px;
+  margin-top: 1em;
+  font-family: sans-serif;
+}

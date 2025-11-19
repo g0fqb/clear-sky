@@ -1,5 +1,8 @@
 document.getElementById('forecastBtn').addEventListener('click', getForecast);
 
+import { getSunTimes, getMoonPhase } from './astro.js';
+
+
 function getUserLocation(callback) {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -8,17 +11,26 @@ function getUserLocation(callback) {
         const lng = pos.coords.longitude;
         callback(lat, lng);
       },
-      (err) => {
-        console.error("Geolocation error:", err);
-        // fallback: Sherwood Observatory coords
-        callback(53.15, -1.20);
+      () => {
+        callback(53.15, -1.20); // fallback: Sherwood Observatory
       }
     );
   } else {
-    console.error("Geolocation not supported");
     callback(53.15, -1.20);
   }
 }
+
+getUserLocation(async (lat, lng) => {
+  const sunTimes = await getSunTimes(lat, lng);
+  const moonPhase = getMoonPhase();
+
+  document.getElementById("astro-info").innerHTML = `
+    <p>🌅 Sunrise: ${sunTimes.sunrise.toLocaleTimeString()}</p>
+    <p>🌇 Sunset: ${sunTimes.sunset.toLocaleTimeString()}</p>
+    <p>🌙 Moon Phase: ${moonPhase}</p>
+  `;
+});
+
 
 async function getSunTimes(lat, lng) {
   const res = await fetch(
