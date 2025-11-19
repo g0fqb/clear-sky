@@ -1,38 +1,30 @@
-const CACHE_NAME = 'clear-sky-runtime-v1';
+const CACHE_NAME = 'clear-sky-v2';
 
 const urlsToCache = [
-  "./",
-  "./index.html",
-  "./app.js",
-  "./styles.css",
-  "./manifest.json",
-  "./icon-192.png",
-  "./icon-512.png"
+  './',              // Root
+  './index.html',
+  './app.js',
+  './styles.css',
+  './manifest.json',
+  './chart.js',      // Chart.js library (if local)
+  './icon-192.png',
+  './icon-512.png'
 ];
 
-
-self.addEventListener("install", (event) => {
+// Install: pre-cache essential files
+self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return Promise.all(
-        urlsToCache.map((url) =>
-          fetch(url).then((response) => {
-            if (response.ok) {
-              return cache.put(url, response);
-            } else {
-              console.warn("Not cached:", url);
-            }
-          })
-        )
-      );
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(urlsToCache).catch(err => {
+        console.error('Cache addAll failed:', err);
+      });
     })
   );
 });
 
-
+// Activate: clean up old caches
 self.addEventListener('activate', event => {
-  // Clean up old caches if needed
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
@@ -43,16 +35,19 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
+// Fetch: serve from cache, then network fallback
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
-      if (cachedResponse) return cachedResponse;
+      if (cachedResponse) {
+        return cachedResponse;
+      }
 
       return fetch(event.request)
         .then(response => {
-          // Only cache successful responses
+          // Only cache valid responses
           if (!response || response.status !== 200 || response.type !== 'basic') {
             return response;
           }
@@ -65,8 +60,8 @@ self.addEventListener('fetch', event => {
           return response;
         })
         .catch(() => {
-          // Optional: fallback logic for offline
-          return new Response('Offline or failed to fetch', {
+          // Offline fallback
+          return new Response('⚠️ Offline or failed to fetch', {
             status: 503,
             statusText: 'Service Unavailable'
           });
