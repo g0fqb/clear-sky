@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Is It Clear Tonight?</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h1>Is It Clear Tonight?</h1>
+  <p>Check sky clarity for stargazing in Matlock.</p>
+  <button id="forecastBtn">Check Forecast</button>
+  <div id="forecast"></div>
+
+<div id="astro-info" class="astro-card">
+  <!-- Astronomy info will appear here -->
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<button id="astroBtn">Show Astronomy Info</button>
+
+<script type="module" src="./app.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<script type="module" src="./app.js"></script>
+
+<canvas id="cloudChart" width="400" height="200"></canvas>
+
+
+</body>
+</html>

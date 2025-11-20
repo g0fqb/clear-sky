@@ -18,6 +18,37 @@ function getUserLocation(callback) {
   }
 }
 
+// Declare chart variable in a scope accessible to your forecast function
+let cloudChart = null;
+
+function renderCloudChart(forecastData) {
+  const ctx = document.getElementById('cloudChart').getContext('2d');
+
+  // If a chart already exists, destroy it before creating a new one
+  if (cloudChart) {
+    cloudChart.destroy();
+  }
+
+  // Create a new chart
+  cloudChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: forecastData.labels,
+      datasets: [{
+        label: 'Cloud Cover',
+        data: forecastData.values,
+        borderColor: 'rgba(75, 192, 192, 1)',
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+}
+
+
 async function getSunTimes(lat, lng) {
   const res = await fetch(
     `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&formatted=0`
