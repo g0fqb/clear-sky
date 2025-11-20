@@ -72,7 +72,6 @@ function renderCloudChart(forecastData, moonIllumination) {
   });
 }
 
-
 async function getSunTimes(lat, lng) {
   const res = await fetch(
     `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&formatted=0`
@@ -191,8 +190,8 @@ async function getForecast() {
       // Moon illumination
       const moonIllumination = getMoonIllumination();
 
-      // Render chart
-     
+      // Render chart using helper
+      renderCloudChart({ labels, values: cloudData, barColors }, moonIllumination);
 
       // Text summary with ⭐ for clearest hour
       const cloudSummary = forecastWindow.map((item, idx) => {
@@ -215,16 +214,6 @@ async function getForecast() {
   });
 }
 
-// Moon illumination
-const moonIllumination = getMoonIllumination();
-
-// Render chart using the helper
-renderCloudChart(
-  { labels, values: cloudData, barColors },
-  moonIllumination
-);
-
-
 // Service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -233,4 +222,3 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.error('Service Worker registration failed:', err));
   });
 }
-
