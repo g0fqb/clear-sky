@@ -21,29 +21,53 @@ function getUserLocation(callback) {
 // Declare chart variable in a scope accessible to your forecast function
 let cloudChart = null;
 
-function renderCloudChart(forecastData) {
+function renderCloudChart(forecastData, moonIllumination) {
   const ctx = document.getElementById('cloudChart').getContext('2d');
 
-  // If a chart already exists, destroy it before creating a new one
+  // Destroy previous chart if it exists
   if (cloudChart) {
     cloudChart.destroy();
   }
 
-  // Create a new chart
   cloudChart = new Chart(ctx, {
-    type: 'line',
+    type: 'bar',
     data: {
       labels: forecastData.labels,
-      datasets: [{
-        label: 'Cloud Cover',
-        data: forecastData.values,
-        borderColor: 'rgba(75, 192, 192, 1)',
-        fill: false
-      }]
+      datasets: [
+        {
+          label: 'Cloud Cover (%)',
+          data: forecastData.values,
+          backgroundColor: forecastData.barColors,
+          borderColor: 'skyblue',
+          borderWidth: 1
+        },
+        {
+          label: `Moon Illumination (${moonIllumination}%)`,
+          data: Array(forecastData.labels.length).fill(moonIllumination),
+          type: 'line',
+          borderColor: 'yellow',
+          borderWidth: 2,
+          fill: false,
+          tension: 0.3
+        }
+      ]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false
+      plugins: {
+        title: {
+          display: true,
+          text: "Tonight's Cloud Cover Forecast",
+          color: 'white'
+        }
+      },
+      scales: {
+        x: { ticks: { color: 'white' } },
+        y: {
+          beginAtZero: true,
+          max: 100,
+          ticks: { color: 'white' }
+        }
+      }
     }
   });
 }
