@@ -192,48 +192,7 @@ async function getForecast() {
       const moonIllumination = getMoonIllumination();
 
       // Render chart
-      const ctx = document.getElementById('cloudChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: 'Cloud Cover (%)',
-              data: cloudData,
-              backgroundColor: barColors,
-              borderColor: 'skyblue',
-              borderWidth: 1
-            },
-            {
-              label: `Moon Illumination (${moonIllumination}%)`,
-              data: Array(labels.length).fill(moonIllumination),
-              type: 'line',
-              borderColor: 'yellow',
-              borderWidth: 2,
-              fill: false,
-              tension: 0.3
-            }
-          ]
-        },
-        options: {
-          plugins: {
-            title: {
-              display: true,
-              text: "Tonight's Cloud Cover Forecast",
-              color: 'white'
-            }
-          },
-          scales: {
-            x: { ticks: { color: 'white' } },
-            y: {
-              beginAtZero: true,
-              max: 100,
-              ticks: { color: 'white' }
-            }
-          }
-        }
-      });
+     
 
       // Text summary with ⭐ for clearest hour
       const cloudSummary = forecastWindow.map((item, idx) => {
@@ -255,6 +214,16 @@ async function getForecast() {
     forecastDiv.innerHTML = `<p>Location access denied: ${error.message}</p>`;
   });
 }
+
+// Moon illumination
+const moonIllumination = getMoonIllumination();
+
+// Render chart using the helper
+renderCloudChart(
+  { labels, values: cloudData, barColors },
+  moonIllumination
+);
+
 
 // Service worker
 if ('serviceWorker' in navigator) {
