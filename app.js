@@ -191,7 +191,7 @@ async function getForecast() {
     const moonIllumination = getMoonIllumination();
 
 let cloudChartInstance; // global or scoped variable
-
+// latest code
 function renderCloudChart(data) {
   // If a chart already exists, destroy it
   if (cloudChartInstance) {
