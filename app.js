@@ -72,7 +72,14 @@ function renderCloudChart(forecastData, moonIllumination) {
       labels: forecastData.labels,
       datasets: [
         {
-          label: `Moon Illumination`,
+          label: 'Cloud Cover (%)',
+          data: forecastData.values,
+          backgroundColor: forecastData.barColors,
+          borderColor: 'skyblue',
+          borderWidth: 1
+        },
+        {
+          label: 'Moon Illumination',
           data: Array(forecastData.labels.length).fill(moonIllumination),
           type: 'line',
           borderColor: 'yellow',
@@ -80,33 +87,47 @@ function renderCloudChart(forecastData, moonIllumination) {
           fill: false,
           tension: 0.3,
           datalabels: {
-          display: true,
-          align: 'top',
-          color: 'yellow',
-          formatter: () => `${moonIllumination}%`
-  }
-}
-
+            display: true,
+            align: 'top',
+            color: 'yellow',
+            formatter: () => `${moonIllumination}%`
+          }
+        }
+      ]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         title: {
           display: true,
           text: "Tonight's Cloud Cover Forecast",
           color: 'white'
+        },
+        datalabels: {
+          display: true
+        },
+        legend: {
+          labels: {
+            color: 'white'
+          }
         }
       },
       scales: {
-        x: { ticks: { color: 'white' } },
+        x: {
+          ticks: { color: 'white' }
+        },
         y: {
           beginAtZero: true,
           max: 100,
           ticks: { color: 'white' }
         }
       }
-    }
+    },
+    plugins: [ChartDataLabels]
   });
 }
+
 
 // -------------------- Astronomy Info --------------------
 
