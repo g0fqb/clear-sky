@@ -1,71 +1,48 @@
-const CACHE_NAME = 'clear-sky-v2';
+// service-worker.js
 
-const urlsToCache = [
-  './',              // Root
-  './index.html',
-  './app.js',
-  './styles.css',
-  './manifest.json',
-  './chart.js',      // Chart.js library (if local)
-  './icon-192.png',
-  './icon-512.png'
+const CACHE_NAME = "clear-sky-cache-v1";
+const ASSETS = [
+  "/",               // root
+  "/index.html",
+  "/styles.css",
+  "/app.js",
+  "/manifest.json",
+  "/favicon.ico"
 ];
 
-// Install: pre-cache essential files
-self.addEventListener('install', event => {
-  self.skipWaiting();
+// Install event: cache core assets
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(urlsToCache).catch(err => {
-        console.error('Cache addAll failed:', err);
-      });
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS);
     })
   );
 });
 
-// Activate: clean up old caches
-self.addEventListener('activate', event => {
+// Activate event: clean up old caches
+self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then(keys =>
+    caches.keys().then((keys) =>
       Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
       )
     )
   );
-  self.clients.claim();
 });
 
-// Fetch: serve from cache, then network fallback
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-
+// Fetch event: serve from cache, fall back to network
+self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      return fetch(event.request)
-        .then(response => {
-          // Only cache valid responses
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseToCache);
-          });
-
-          return response;
-        })
-        .catch(() => {
-          // Offline fallback
-          return new Response('⚠️ Offline or failed to fetch', {
-            status: 503,
-            statusText: 'Service Unavailable'
-          });
-        });
+    caches.match(event.request).then((cached) => {
+      return (
+        cached ||
+        fetch(event.request).catch(() =>
+          // Optional offline fallback
+          event.request.destination === "document"
+            ? caches.match("/index.html")
+            : undefined
+        )
+      );
     })
   );
 });
