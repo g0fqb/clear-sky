@@ -187,8 +187,26 @@ async function getForecast() {
         idx === minCloudIndex ? 'rgba(50,205,50,0.8)' : 'rgba(135,206,235,0.6)'
       );
 
-    // Moon illumination
-    const moonIllumination = getMoonIllumination();
+      // Moon illumination
+      const moonIllumination = getMoonIllumination();
+
+      // Prepare forecast data object
+      const forecastData = {
+        labels,
+        values: cloudData,
+        barColors
+      };
+
+      // Render chart
+      forecastDiv.innerHTML = "<canvas id='cloudChart'></canvas>";
+      renderCloudChart(forecastData, moonIllumination);
+
+    } catch (err) {
+      forecastDiv.innerHTML = `<p>Error fetching forecast: ${err.message}</p>`;
+    }
+  });
+}
+
 
 let cloudChartInstance; // global or scoped variable
 // latest code
