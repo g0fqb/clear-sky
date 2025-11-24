@@ -1,21 +1,33 @@
-// Button listeners
-document.getElementById('forecastBtn').addEventListener('click', getForecast);
-document.getElementById('astroBtn').addEventListener('click', refreshAstronomyInfo);
+// -------------------- DOM Ready --------------------
+document.addEventListener('DOMContentLoaded', () => {
+  const forecastBtn = document.getElementById('forecastBtn');
+  const astroBtn = document.getElementById('astroBtn');
+
+  if (forecastBtn) {
+    forecastBtn.addEventListener('click', getForecast);
+  }
+  if (astroBtn) {
+    astroBtn.addEventListener('click', refreshAstronomyInfo);
+  }
+
+  // Show astronomy info immediately on load
+  getUserLocation(async (lat, lng) => {
+    const sunTimes = await getSunTimes(lat, lng);
+    const moonPhase = getMoonPhase();
+    document.getElementById("astro-info").innerHTML = `
+      <p>🌅 Sunrise: ${sunTimes.sunrise.toLocaleTimeString()}</p>
+      <p>🌇 Sunset: ${sunTimes.sunset.toLocaleTimeString()}</p>
+      <p>🌙 Moon Phase: ${moonPhase}</p>
+    `;
+  });
+});
 
 // -------------------- Astronomy Helpers --------------------
-
 function getUserLocation(callback) {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        callback(lat, lng);
-      },
-      () => {
-        // fallback: Sherwood Observatory
-        callback(53.15, -1.20);
-      }
+      (pos) => callback(pos.coords.latitude, pos.coords.longitude),
+      () => callback(53.15, -1.20) // fallback: Sherwood Observatory
     );
   } else {
     callback(53.15, -1.20);
@@ -38,7 +50,6 @@ function getMoonPhase(date = new Date()) {
   const newMoon = new Date(1970, 0, 7, 20, 35, 0);
   const phase = ((date.getTime() - newMoon.getTime()) / 1000) % lp;
   const phaseIndex = Math.floor((phase / lp) * 8);
-
   const phases = [
     "New Moon","Waxing Crescent","First Quarter","Waxing Gibbous",
     "Full Moon","Waning Gibbous","Last Quarter","Waning Crescent"
@@ -55,13 +66,11 @@ function getMoonIllumination(date = new Date()) {
 }
 
 // -------------------- Chart Logic --------------------
-
 let cloudChart = null;
 
 function renderCloudChart(forecastData, moonIllumination) {
   const ctx = document.getElementById('cloudChart').getContext('2d');
 
-  // Destroy previous chart if it exists
   if (cloudChart) {
     cloudChart.destroy();
   }
@@ -104,44 +113,19 @@ function renderCloudChart(forecastData, moonIllumination) {
           text: "Tonight's Cloud Cover Forecast",
           color: 'white'
         },
-        datalabels: {
-          display: true
-        },
-        legend: {
-          labels: {
-            color: 'white'
-          }
-        }
+        datalabels: { display: true },
+        legend: { labels: { color: 'white' } }
       },
       scales: {
-        x: {
-          ticks: { color: 'white' }
-        },
-        y: {
-          beginAtZero: true,
-          max: 100,
-          ticks: { color: 'white' }
-        }
+        x: { ticks: { color: 'white' } },
+        y: { beginAtZero: true, max: 100, ticks: { color: 'white' } }
       }
     },
     plugins: [ChartDataLabels]
   });
 }
 
-
 // -------------------- Astronomy Info --------------------
-
-// Show astronomy info immediately
-getUserLocation(async (lat, lng) => {
-  const sunTimes = await getSunTimes(lat, lng);
-  const moonPhase = getMoonPhase();
-  document.getElementById("astro-info").innerHTML = `
-    <p>🌅 Sunrise: ${sunTimes.sunrise.toLocaleTimeString()}</p>
-    <p>🌇 Sunset: ${sunTimes.sunset.toLocaleTimeString()}</p>
-    <p>🌙 Moon Phase: ${moonPhase}</p>
-  `;
-});
-
 function refreshAstronomyInfo() {
   getUserLocation(async (lat, lng) => {
     const sunTimes = await getSunTimes(lat, lng);
@@ -155,7 +139,6 @@ function refreshAstronomyInfo() {
 }
 
 // -------------------- Forecast + Chart --------------------
-
 async function getForecast() {
   const forecastDiv = document.getElementById('forecast');
   forecastDiv.innerHTML = "<p>Loading forecast...</p>";
@@ -184,7 +167,6 @@ async function getForecast() {
       const now = new Date();
       const localDate = now.getDate();
 
-      // Forecast window: 18:00 tonight → 02:00 tomorrow
       const forecastWindow = data.list.filter(item => {
         const itemDate = new Date(item.dt * 1000);
         const itemLocalDate = itemDate.getDate();
@@ -208,23 +190,15 @@ async function getForecast() {
         typeof item.clouds === 'number' ? item.clouds : item.clouds?.all ?? 0
       );
 
-      // Highlight clearest hour
       const minCloudIndex = cloudData.indexOf(Math.min(...cloudData));
       const barColors = cloudData.map((val, idx) =>
         idx === minCloudIndex ? 'rgba(50,205,50,0.8)' : 'rgba(135,206,235,0.6)'
       );
 
-      // Moon illumination
       const moonIllumination = getMoonIllumination();
 
-      // Prepare forecast data object
-      const forecastData = {
-        labels,
-        values: cloudData,
-        barColors
-      };
+      const forecastData = { labels, values: cloudData, barColors };
 
-      // Render chart
       forecastDiv.innerHTML = "<canvas id='cloudChart'></canvas>";
       renderCloudChart(forecastData, moonIllumination);
 
@@ -235,7 +209,6 @@ async function getForecast() {
 }
 
 // -------------------- Service Worker --------------------
-
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js')
