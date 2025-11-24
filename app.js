@@ -187,30 +187,33 @@ async function getForecast() {
         idx === minCloudIndex ? 'rgba(50,205,50,0.8)' : 'rgba(135,206,235,0.6)'
       );
 
-      // Moon illumination
-      const moonIllumination = getMoonIllumination();
+    // Moon illumination
+    const moonIllumination = getMoonIllumination();
 
-      // Render chart using helper
-      renderCloudChart({ labels, values: cloudData, barColors }, moonIllumination);
+let cloudChartInstance; // global or scoped variable
 
-      // Text summary with ⭐ for clearest hour
-      const cloudSummary = forecastWindow.map((item, idx) => {
-        const time = new Date(item.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const cloudCover = typeof item.clouds === 'number' ? item.clouds : item.clouds?.all ?? 'N/A';
-        const star = idx === minCloudIndex ? " ⭐ Clearest" : "";
-        return `<li>${time}: ${cloudCover}% cloud cover${star}</li>`;
-      }).join('');
+function renderCloudChart(data) {
+  // If a chart already exists, destroy it
+  if (cloudChartInstance) {
+    cloudChartInstance.destroy();
+  }
 
-      forecastDiv.innerHTML = `
-        <h2>Tonight's Forecast</h2>
-        <ul>${cloudSummary}</ul>
-      `;
-    } catch (error) {
-      console.error("Fetch error:", error);
-      forecastDiv.innerHTML = `<p>Error fetching forecast: ${error.message}</p>`;
+  const ctx = document.getElementById('cloudChart').getContext('2d');
+  cloudChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        label: 'Cloud Cover',
+        data: data.values,
+        borderColor: 'rgba(75, 192, 192, 1)',
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
     }
-  }, error => {
-    forecastDiv.innerHTML = `<p>Location access denied: ${error.message}</p>`;
   });
 }
 
