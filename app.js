@@ -72,22 +72,21 @@ function renderCloudChart(forecastData, moonIllumination) {
       labels: forecastData.labels,
       datasets: [
         {
-          label: 'Cloud Cover (%)',
-          data: forecastData.values,
-          backgroundColor: forecastData.barColors,
-          borderColor: 'skyblue',
-          borderWidth: 1
-        },
-        {
-          label: `Moon Illumination (${moonIllumination}%)`,
+          label: `Moon Illumination`,
           data: Array(forecastData.labels.length).fill(moonIllumination),
           type: 'line',
           borderColor: 'yellow',
           borderWidth: 2,
           fill: false,
-          tension: 0.3
-        }
-      ]
+          tension: 0.3,
+          datalabels: {
+          display: true,
+          align: 'top',
+          color: 'yellow',
+          formatter: () => `${moonIllumination}%`
+  }
+}
+
     },
     options: {
       plugins: {
