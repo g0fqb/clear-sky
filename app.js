@@ -65,6 +65,50 @@ function getMoonIllumination(date = new Date()) {
   return Math.round(illumination * 100);
 }
 
+function renderMoonTimeline() {
+  const ctx = document.createElement("canvas");
+  ctx.id = "moonTimelineChart";
+  document.getElementById("moon-timeline").appendChild(ctx);
+
+  const days = [...Array(7).keys()].map(i => {
+    const date = new Date();
+    date.setDate(date.getDate() + i);
+    return date;
+  });
+
+  const labels = days.map(d => d.toLocaleDateString([], { weekday: "short" }));
+  const values = days.map(d => getMoonIllumination(d));
+
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "Moon Illumination (%)",
+        data: values,
+        borderColor: "yellow",
+        fill: false,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: "Moon Illumination Over Next 7 Days",
+          color: "white"
+        }
+      },
+      scales: {
+        y: { beginAtZero: true, max: 100, ticks: { color: "white" } },
+        x: { ticks: { color: "white" } }
+      }
+    }
+  });
+}
+
+
 // -------------------- Chart Logic --------------------
 let cloudChart = null;
 
