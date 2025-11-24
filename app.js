@@ -1,6 +1,9 @@
+// Button listeners
 document.getElementById('forecastBtn').addEventListener('click', getForecast);
+document.getElementById('astroBtn').addEventListener('click', refreshAstronomyInfo);
 
-// Astronomy helpers
+// -------------------- Astronomy Helpers --------------------
+
 function getUserLocation(callback) {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -10,7 +13,8 @@ function getUserLocation(callback) {
         callback(lat, lng);
       },
       () => {
-        callback(53.15, -1.20); // fallback: Sherwood Observatory
+        // fallback: Sherwood Observatory
+        callback(53.15, -1.20);
       }
     );
   } else {
@@ -18,7 +22,40 @@ function getUserLocation(callback) {
   }
 }
 
-// Declare chart variable in a scope accessible to your forecast function
+async function getSunTimes(lat, lng) {
+  const res = await fetch(
+    `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&formatted=0`
+  );
+  const data = await res.json();
+  return {
+    sunrise: new Date(data.results.sunrise),
+    sunset: new Date(data.results.sunset)
+  };
+}
+
+function getMoonPhase(date = new Date()) {
+  const lp = 2551443; // lunar period in seconds
+  const newMoon = new Date(1970, 0, 7, 20, 35, 0);
+  const phase = ((date.getTime() - newMoon.getTime()) / 1000) % lp;
+  const phaseIndex = Math.floor((phase / lp) * 8);
+
+  const phases = [
+    "New Moon","Waxing Crescent","First Quarter","Waxing Gibbous",
+    "Full Moon","Waning Gibbous","Last Quarter","Waning Crescent"
+  ];
+  return phases[phaseIndex];
+}
+
+function getMoonIllumination(date = new Date()) {
+  const lp = 2551443;
+  const newMoon = new Date(1970, 0, 7, 20, 35, 0);
+  const phase = ((date.getTime() - newMoon.getTime()) / 1000) % lp;
+  const illumination = (1 - Math.cos((2 * Math.PI * phase) / lp)) / 2;
+  return Math.round(illumination * 100);
+}
+
+// -------------------- Chart Logic --------------------
+
 let cloudChart = null;
 
 function renderCloudChart(forecastData, moonIllumination) {
@@ -72,37 +109,7 @@ function renderCloudChart(forecastData, moonIllumination) {
   });
 }
 
-async function getSunTimes(lat, lng) {
-  const res = await fetch(
-    `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&formatted=0`
-  );
-  const data = await res.json();
-  return {
-    sunrise: new Date(data.results.sunrise),
-    sunset: new Date(data.results.sunset)
-  };
-}
-
-function getMoonPhase(date = new Date()) {
-  const lp = 2551443; // lunar period in seconds
-  const newMoon = new Date(1970, 0, 7, 20, 35, 0);
-  const phase = ((date.getTime() - newMoon.getTime()) / 1000) % lp;
-  const phaseIndex = Math.floor((phase / lp) * 8);
-
-  const phases = [
-    "New Moon","Waxing Crescent","First Quarter","Waxing Gibbous",
-    "Full Moon","Waning Gibbous","Last Quarter","Waning Crescent"
-  ];
-  return phases[phaseIndex];
-}
-
-function getMoonIllumination(date = new Date()) {
-  const lp = 2551443;
-  const newMoon = new Date(1970, 0, 7, 20, 35, 0);
-  const phase = ((date.getTime() - newMoon.getTime()) / 1000) % lp;
-  const illumination = (1 - Math.cos((2 * Math.PI * phase) / lp)) / 2;
-  return Math.round(illumination * 100);
-}
+// -------------------- Astronomy Info --------------------
 
 // Show astronomy info immediately
 getUserLocation(async (lat, lng) => {
@@ -115,8 +122,7 @@ getUserLocation(async (lat, lng) => {
   `;
 });
 
-// Button to refresh astronomy info
-document.getElementById('astroBtn').addEventListener('click', () => {
+function refreshAstronomyInfo() {
   getUserLocation(async (lat, lng) => {
     const sunTimes = await getSunTimes(lat, lng);
     const moonPhase = getMoonPhase();
@@ -126,9 +132,10 @@ document.getElementById('astroBtn').addEventListener('click', () => {
       <p>🌙 Moon Phase: ${moonPhase}</p>
     `;
   });
-});
+}
 
-// Forecast + chart
+// -------------------- Forecast + Chart --------------------
+
 async function getForecast() {
   const forecastDiv = document.getElementById('forecast');
   forecastDiv.innerHTML = "<p>Loading forecast...</p>";
@@ -207,35 +214,8 @@ async function getForecast() {
   });
 }
 
+// -------------------- Service Worker --------------------
 
-let cloudChartInstance; // global or scoped variable
-// latest code
-function renderCloudChart(data) {
-  // If a chart already exists, destroy it
-  if (cloudChartInstance) {
-    cloudChartInstance.destroy();
-  }
-
-  const ctx = document.getElementById('cloudChart').getContext('2d');
-  cloudChartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: data.labels,
-      datasets: [{
-        label: 'Cloud Cover',
-        data: data.values,
-        borderColor: 'rgba(75, 192, 192, 1)',
-        fill: false
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false
-    }
-  });
-}
-
-// Service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js')
