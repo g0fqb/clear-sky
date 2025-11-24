@@ -139,6 +139,7 @@ function refreshAstronomyInfo() {
 }
 
 // -------------------- Forecast + Chart --------------------
+
 async function getForecast() {
   const forecastDiv = document.getElementById('forecast');
   forecastDiv.innerHTML = "<p>Loading forecast...</p>";
@@ -167,6 +168,7 @@ async function getForecast() {
       const now = new Date();
       const localDate = now.getDate();
 
+      // Forecast window: 18:00 tonight → 02:00 tomorrow
       const forecastWindow = data.list.filter(item => {
         const itemDate = new Date(item.dt * 1000);
         const itemLocalDate = itemDate.getDate();
@@ -190,6 +192,7 @@ async function getForecast() {
         typeof item.clouds === 'number' ? item.clouds : item.clouds?.all ?? 0
       );
 
+      // Highlight clearest hour
       const minCloudIndex = cloudData.indexOf(Math.min(...cloudData));
       const barColors = cloudData.map((val, idx) =>
         idx === minCloudIndex ? 'rgba(50,205,50,0.8)' : 'rgba(135,206,235,0.6)'
@@ -199,7 +202,13 @@ async function getForecast() {
 
       const forecastData = { labels, values: cloudData, barColors };
 
-      forecastDiv.innerHTML = "<canvas id='cloudChart'></canvas>";
+      // 🔧 Clear and create a fresh canvas each time
+      forecastDiv.innerHTML = "";
+      const canvas = document.createElement("canvas");
+      canvas.id = "cloudChart";
+      forecastDiv.appendChild(canvas);
+
+      // Render chart
       renderCloudChart(forecastData, moonIllumination);
 
     } catch (err) {
@@ -207,6 +216,7 @@ async function getForecast() {
     }
   });
 }
+
 
 // -------------------- Service Worker --------------------
 if ('serviceWorker' in navigator) {
