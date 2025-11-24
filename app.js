@@ -10,15 +10,21 @@ document.addEventListener('DOMContentLoaded', () => {
     astroBtn.addEventListener('click', refreshAstronomyInfo);
   }
 
-  // Show astronomy info immediately on load
+  // Show astronomy info and moon timeline immediately on load
   getUserLocation(async (lat, lng) => {
     const sunTimes = await getSunTimes(lat, lng);
     const moonPhase = getMoonPhase();
-    document.getElementById("astro-info").innerHTML = `
-      <p>🌅 Sunrise: ${sunTimes.sunrise.toLocaleTimeString()}</p>
-      <p>🌇 Sunset: ${sunTimes.sunset.toLocaleTimeString()}</p>
-      <p>🌙 Moon Phase: ${moonPhase}</p>
-    `;
+
+    const astroInfo = document.getElementById("astro-info");
+    if (astroInfo) {
+      astroInfo.innerHTML = `
+        <p>🌅 Sunrise: ${sunTimes.sunrise.toLocaleTimeString()}</p>
+        <p>🌇 Sunset: ${sunTimes.sunset.toLocaleTimeString()}</p>
+        <p>🌙 Moon Phase: ${moonPhase}</p>
+      `;
+    }
+
+    renderMoonTimeline(); // draws once on load
   });
 });
 
@@ -65,10 +71,16 @@ function getMoonIllumination(date = new Date()) {
   return Math.round(illumination * 100);
 }
 
+// -------------------- Moon Timeline Chart --------------------
 function renderMoonTimeline() {
-  const ctx = document.createElement("canvas");
-  ctx.id = "moonTimelineChart";
-  document.getElementById("moon-timeline").appendChild(ctx);
+  const container = document.getElementById("moon-timeline");
+  if (!container) return;
+
+  // Clear any previous chart/canvas
+  container.innerHTML = "";
+  const canvas = document.createElement("canvas");
+  canvas.id = "moonTimelineChart";
+  container.appendChild(canvas);
 
   const days = [...Array(7).keys()].map(i => {
     const date = new Date();
@@ -79,7 +91,7 @@ function renderMoonTimeline() {
   const labels = days.map(d => d.toLocaleDateString([], { weekday: "short" }));
   const values = days.map(d => getMoonIllumination(d));
 
-  new Chart(ctx, {
+  new Chart(canvas, {
     type: "line",
     data: {
       labels,
@@ -98,7 +110,8 @@ function renderMoonTimeline() {
           display: true,
           text: "Moon Illumination Over Next 7 Days",
           color: "white"
-        }
+        },
+        legend: { labels: { color: "white" } }
       },
       scales: {
         y: { beginAtZero: true, max: 100, ticks: { color: "white" } },
@@ -108,15 +121,19 @@ function renderMoonTimeline() {
   });
 }
 
-
-// -------------------- Chart Logic --------------------
+// -------------------- Forecast Chart Logic --------------------
 let cloudChart = null;
 
 function renderCloudChart(forecastData, moonIllumination) {
-  const ctx = document.getElementById('cloudChart').getContext('2d');
+  const canvas = document.getElementById('cloudChart');
+  if (!canvas) return;
 
+  const ctx = canvas.getContext('2d');
+
+  // Destroy previous chart instance if it exists
   if (cloudChart) {
     cloudChart.destroy();
+    cloudChart = null;
   }
 
   cloudChart = new Chart(ctx, {
@@ -174,18 +191,25 @@ function refreshAstronomyInfo() {
   getUserLocation(async (lat, lng) => {
     const sunTimes = await getSunTimes(lat, lng);
     const moonPhase = getMoonPhase();
-    document.getElementById("astro-info").innerHTML = `
-      <p>🌅 Sunrise: ${sunTimes.sunrise.toLocaleTimeString()}</p>
-      <p>🌇 Sunset: ${sunTimes.sunset.toLocaleTimeString()}</p>
-      <p>🌙 Moon Phase: ${moonPhase}</p>
-    `;
+
+    const astroInfo = document.getElementById("astro-info");
+    if (astroInfo) {
+      astroInfo.innerHTML = `
+        <p>🌅 Sunrise: ${sunTimes.sunrise.toLocaleTimeString()}</p>
+        <p>🌇 Sunset: ${sunTimes.sunset.toLocaleTimeString()}</p>
+        <p>🌙 Moon Phase: ${moonPhase}</p>
+      `;
+    }
+
+    renderMoonTimeline(); // re-draw on refresh
   });
 }
 
 // -------------------- Forecast + Chart --------------------
-
 async function getForecast() {
   const forecastDiv = document.getElementById('forecast');
+  if (!forecastDiv) return;
+
   forecastDiv.innerHTML = "<p>Loading forecast...</p>";
 
   if (!navigator.geolocation) {
@@ -246,7 +270,7 @@ async function getForecast() {
 
       const forecastData = { labels, values: cloudData, barColors };
 
-      // 🔧 Clear and create a fresh canvas each time
+      // Clear and create a fresh canvas each time
       forecastDiv.innerHTML = "";
       const canvas = document.createElement("canvas");
       canvas.id = "cloudChart";
@@ -258,9 +282,10 @@ async function getForecast() {
     } catch (err) {
       forecastDiv.innerHTML = `<p>Error fetching forecast: ${err.message}</p>`;
     }
+  }, (error) => {
+    forecastDiv.innerHTML = `<p>Geolocation error: ${error.message}</p>`;
   });
 }
-
 
 // -------------------- Service Worker --------------------
 if ('serviceWorker' in navigator) {
