@@ -3,28 +3,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const forecastBtn = document.getElementById('forecastBtn');
   const astroBtn = document.getElementById('astroBtn');
 
-  if (forecastBtn) {
-    forecastBtn.addEventListener('click', getForecast);
-  }
-  if (astroBtn) {
-    astroBtn.addEventListener('click', refreshAstronomyInfo);
-  }
+  if (forecastBtn) forecastBtn.addEventListener('click', getForecast);
+  if (astroBtn) astroBtn.addEventListener('click', refreshAstronomyInfo);
 
-  // Show astronomy info and moon timeline immediately on load
+  // Show astronomy info immediately on load
   getUserLocation(async (lat, lng) => {
     const sunTimes = await getSunTimes(lat, lng);
     const moonPhase = getMoonPhase();
 
-    const astroInfo = document.getElementById("astro-info");
-    if (astroInfo) {
-      astroInfo.innerHTML = `
-        <p>🌅 Sunrise: ${sunTimes.sunrise.toLocaleTimeString()}</p>
-        <p>🌇 Sunset: ${sunTimes.sunset.toLocaleTimeString()}</p>
-        <p>🌙 Moon Phase: ${moonPhase}</p>
-      `;
-    }
-
-    renderMoonTimeline(); // draws once on load
+    document.getElementById("astro-info").innerHTML = `
+      <p>🌅 Sunrise: ${sunTimes.sunrise.toLocaleTimeString()}</p>
+      <p>🌇 Sunset: ${sunTimes.sunset.toLocaleTimeString()}</p>
+      <p>🌙 Moon Phase: ${moonPhase}</p>
+    `;
+    renderMoonTimeline();
   });
 });
 
@@ -52,7 +44,7 @@ async function getSunTimes(lat, lng) {
 }
 
 function getMoonPhase(date = new Date()) {
-  const lp = 2551443; // lunar period in seconds
+  const lp = 2551443;
   const newMoon = new Date(1970, 0, 7, 20, 35, 0);
   const phase = ((date.getTime() - newMoon.getTime()) / 1000) % lp;
   const phaseIndex = Math.floor((phase / lp) * 8);
@@ -70,13 +62,11 @@ function getMoonIllumination(date = new Date()) {
   const illumination = (1 - Math.cos((2 * Math.PI * phase) / lp)) / 2;
   return Math.round(illumination * 100);
 }
-
 // -------------------- Moon Timeline Chart --------------------
 function renderMoonTimeline() {
   const container = document.getElementById("moon-timeline");
   if (!container) return;
 
-  // Clear any previous chart/canvas
   container.innerHTML = "";
   const canvas = document.createElement("canvas");
   canvas.id = "moonTimelineChart";
@@ -110,8 +100,7 @@ function renderMoonTimeline() {
           display: true,
           text: "Moon Illumination Over Next 7 Days",
           color: "white"
-        },
-        legend: { labels: { color: "white" } }
+        }
       },
       scales: {
         y: { beginAtZero: true, max: 100, ticks: { color: "white" } },
@@ -120,7 +109,6 @@ function renderMoonTimeline() {
     }
   });
 }
-
 // -------------------- Forecast Chart Logic --------------------
 let cloudChart = null;
 
@@ -130,7 +118,6 @@ function renderCloudChart(forecastData, moonIllumination) {
 
   const ctx = canvas.getContext('2d');
 
-  // Destroy previous chart instance if it exists
   if (cloudChart) {
     cloudChart.destroy();
     cloudChart = null;
@@ -185,7 +172,6 @@ function renderCloudChart(forecastData, moonIllumination) {
     plugins: [ChartDataLabels]
   });
 }
-
 // -------------------- Astronomy Info --------------------
 function refreshAstronomyInfo() {
   getUserLocation(async (lat, lng) => {
@@ -201,10 +187,9 @@ function refreshAstronomyInfo() {
       `;
     }
 
-    renderMoonTimeline(); // re-draw on refresh
+    renderMoonTimeline(); // re-draw timeline when refreshed
   });
 }
-
 // -------------------- Forecast + Chart --------------------
 async function getForecast() {
   const forecastDiv = document.getElementById('forecast');
@@ -220,7 +205,7 @@ async function getForecast() {
   navigator.geolocation.getCurrentPosition(async position => {
     const lat = position.coords.latitude;
     const lon = position.coords.longitude;
-    const apiKey = '2413a7da0cb67ef8937d4eabb6a1d76e';
+    const apiKey = 'YOUR_OPENWEATHERMAP_KEY';
 
     const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
 
@@ -267,16 +252,14 @@ async function getForecast() {
       );
 
       const moonIllumination = getMoonIllumination();
-
       const forecastData = { labels, values: cloudData, barColors };
 
-      // Clear and create a fresh canvas each time
+      // Use persistent canvas
       forecastDiv.innerHTML = "";
       const canvas = document.createElement("canvas");
       canvas.id = "cloudChart";
       forecastDiv.appendChild(canvas);
 
-      // Render chart
       renderCloudChart(forecastData, moonIllumination);
 
     } catch (err) {
@@ -286,7 +269,6 @@ async function getForecast() {
     forecastDiv.innerHTML = `<p>Geolocation error: ${error.message}</p>`;
   });
 }
-
 // -------------------- Service Worker --------------------
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
